@@ -46,6 +46,7 @@ class RobotController(Node):
         self.turn_angle = 0.0
         self.turn_direction = TURN_LEFT
         self.scan_triggered = [False] * 4
+        self.fault = False
 
         self.odom_subscriber = self.create_subscription(
             Odometry,
@@ -82,6 +83,16 @@ class RobotController(Node):
         back_ranges  = msg.ranges[91:270]
         right_ranges = msg.ranges[271:330]
 
+        # there are other ways of detecting faults:
+        # - if there are sudden jumps in distance
+        # - if the distance to an object disappears when you are travelling towards the ojbect
+        #
+        # these can be avoided by either stopping the robot, and then waiting for the fault to go away
+        # or keeping some extra distance from the objstacle to account for the margin of error
+        self.fault = all(msg.ranges[i] == float('inf') for i in range(len(msg.ranges)))
+        if self.fault:
+            print('there\'s a heckin\' fault')
+
         self.scan_triggered[SCAN_FRONT] = min(front_ranges) < SCAN_THRESHOLD 
         self.scan_triggered[SCAN_LEFT]  = min(left_ranges)  < SCAN_THRESHOLD
         self.scan_triggered[SCAN_BACK]  = min(back_ranges)  < SCAN_THRESHOLD
@@ -89,7 +100,14 @@ class RobotController(Node):
 
 
     def control_loop(self):
-      
+                
+        if self.fault:
+            msg = Twist()
+            msg.linear.x = 0.0
+            msg.angular.z = 0.0
+            self.cmd_vel_publisher.publish(msg)
+            return
+
         match self.state:
 
             case State.FORWARD:
