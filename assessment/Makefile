@@ -1,3 +1,4 @@
-assessment:
-	colcon build --symlink-install
-.PHONY: assessment
+PACKAGE = $(shell pwd | xargs basename)
+build:
+	cd ~/scratch/turtlebot3_ws && colcon build --symlink-install --packages-select $(PACKAGE)
+.PHONY: build

@@ -4,7 +4,4 @@
 assessment/report/*.aux
 assessment/report/*.log
 assessment/report/*.toc
-**/build/*
-**/install/*
-**/log/*
 TODO.txt
